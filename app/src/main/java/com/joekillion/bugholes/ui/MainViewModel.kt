@@ -13,12 +13,17 @@ class MainViewModel(private val repo: GameRepository): ViewModel() {
     val game = _game.asStateFlow()
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
+    private val _showHistory = MutableStateFlow(false)
+    val showHistory = _showHistory.asStateFlow()
+    val games = selected.filterNotNull().flatMapLatest { repo.games(it.profile.id) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun createProfile(name: String, players: List<String>) = viewModelScope.launch { repo.createProfile(name, players) }
     fun select(profile: ProfileWithPlayers) { _selected.value = profile }
-    fun startGame() {
+    fun startGame(startingPlayerIndex: Int = 0) {
         val p = _selected.value ?: return
-        _game.value = ActiveGameState(players = p.players.sortedBy { it.id })
+        val players = p.players.sortedBy { it.id }
+        _game.value = ActiveGameState(players = players, startingPlayerIndex = startingPlayerIndex.coerceIn(0, players.lastIndex.coerceAtLeast(0)))
     }
     fun miss() { _game.value = _game.value?.add(ActionType.MISS) }
     fun foul() { _game.value = _game.value?.add(ActionType.FOUL) }
@@ -40,6 +45,8 @@ class MainViewModel(private val repo: GameRepository): ViewModel() {
         viewModelScope.launch { repo.saveGame(p.profile.id, finalState, result); _game.value = null; _message.value = if(result==GameResult.WIN) "Victory saved" else "Loss saved" }
     }
     fun clearMessage() { _message.value = null }
+    fun openHistory() { _showHistory.value = true }
+    fun closeHistory() { _showHistory.value = false }
 }
 
 class MainViewModelFactory(private val repo: GameRepository): ViewModelProvider.Factory {
