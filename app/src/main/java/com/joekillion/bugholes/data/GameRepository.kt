@@ -40,9 +40,10 @@ data class GameAction(val playerId: Long, val type: ActionType, val strokes: Int
 data class ActiveGameState(
     val players: List<PlayerEntity>,
     val startedAt: Long = System.currentTimeMillis(),
+    val startingPlayerIndex: Int = 0,
     val actions: List<GameAction> = emptyList()
 ) {
-    val currentPlayerIndex: Int get() = if (players.isEmpty()) 0 else actions.size % players.size
+    val currentPlayerIndex: Int get() = if (players.isEmpty()) 0 else (startingPlayerIndex + actions.size) % players.size
     val currentPlayer: PlayerEntity get() = players[currentPlayerIndex]
     val totalStrokes: Int get() = actions.sumOf { it.strokes }
     val totalFouls: Int get() = actions.count { it.type == ActionType.FOUL }
