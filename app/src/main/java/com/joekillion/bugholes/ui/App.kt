@@ -181,6 +181,12 @@ private fun ProfileScreen(profile: ProfileWithPlayers, vm: MainViewModel) {
             chooseStarter = false
         }
     }
+    if (chooseStarter) StartGameDialog(profile.players.sortedBy { it.id }, { chooseStarter = false }) { vm.startGame(it); chooseStarter = false }
+}
+
+@Composable private fun StartGameDialog(players: List<PlayerEntity>, onDismiss: () -> Unit, onStart: (Int) -> Unit) {
+    var starter by remember { mutableIntStateOf(0) }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Who goes first?") }, text = { Column { Text("Choose the starting player for this game."); players.forEachIndexed { index, player -> Row(Modifier.fillMaxWidth().clickable { starter = index }, verticalAlignment = Alignment.CenterVertically) { RadioButton(selected = starter == index, onClick = { starter = index }); Text(player.name) } } } }, confirmButton = { BugButton("Start Game", { onStart(starter) }) }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
 }
 
 @Composable
